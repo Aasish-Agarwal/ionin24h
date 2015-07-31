@@ -1,0 +1,12 @@
+ "Abhishek Jain" <abhishek.jain@iontrading.com>,
+"Amit Garg" <amit.garg@iontrading.com>,
+"Antonio Fuschetto" <a.fuschetto@iontrading.com>,
+"Carlo Bellanca" <c.bellanca@iontrading.com>,
+"Giovanni Battaglia" <g.battaglia@iontrading.com>,
+"Lalit Mohan Tiwari" <l.tiwari@iontrading.com>,
+"Lorenzo Ventura" <l.ventura@iontrading.com>,
+"Luca Veraldi" <l.veraldi@iontrading.com>,
+"Nitin Jalan" <n.jalan@iontrading.com>,
+"Rajiv Kanvar" <r.kanvar@iontrading.com>,
+"Riccardo Chiaverini" <r.chiaverini@iontrading.com>,
+p.parlapiano@iontrading.com 

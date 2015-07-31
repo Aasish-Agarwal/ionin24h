@@ -1,0 +1,4 @@
+ "Alessandro Eccher" <a.eccher@iontrading.com>,
+"Anurag Goel" <a.goel@iontrading.com>,
+"Massimiliano Mammini" <m.mammini@iontrading.com>,
+"Michele Bini" <m.bini@iontrading.com> 

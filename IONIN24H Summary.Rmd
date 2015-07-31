@@ -1,0 +1,130 @@
+---
+title: "IONIN24H Summary"
+author: "Aasish Agarwal"
+date: "July 31, 2015"
+---
+# Prerequisites
+
+This script assumes that data for analysis is stored under `data\sessions` folder.
+
+* Create a folder named `<yyyymm>` under sessions folder - `Working Folder`
+* Download the contacts from `ION Tracker` and save them as `ion_contacts.csv` in `Working Folder`
+* Create `voters.csv` in `Working Folder` from the responses recieved for this session. Only include the `Username` column
+
+
+
+# Preparing data set
+```{r,results='hide'}
+library(dplyr)
+session <- "201506"
+
+
+# Prepare Participant Structure
+## Browse through the list of teams
+## Create a data frame with mail id and mailing list name
+
+
+mailinglistpath = paste("data/sessions" , session , "teams", sep = "/")
+files <- list.files(path=mailinglistpath, pattern="*.txt", full.names=T, recursive=FALSE)
+
+mailing_lists <- do.call(rbind,lapply(files, function(x) {
+  listname <- sub("@.*", "", basename(x))
+  members <- read.csv(x,stringsAsFactors = F, na.strings=c("NA","NaN", "") , header = F) %>%
+    tbl_df() %>%
+    filter( !is.na(V1) ) %>%
+    mutate(email = sub(".*<", "", V1), email = sub(">.*","",email),team = listname)  %>%
+    mutate(email = tolower(email))  %>%
+    select(email,team)
+  })
+)
+
+
+# Prepare voters list
+filename = paste("data/sessions" , session , "voters.csv", sep = "/")
+voters <- read.csv(filename,stringsAsFactors = F, na.strings=c("NA","NaN", "") ) %>%
+  tbl_df() %>%
+  rename(email = Username) %>%
+  select(email) %>%
+  filter( !is.na(email) ) %>%
+  mutate(email = tolower(email), voted = 1) 
+
+
+# Create the data frame with mail, Location, Team, Group
+## Read the contacts file
+filename = paste("data/sessions" , session , "ion_contacts.csv", sep = "/")
+ion_contacts <- read.csv(filename,stringsAsFactors = F, na.strings=c("NA","NaN", "") ) %>%
+  tbl_df() %>%
+  rename(email = E.mail.Address , location = Office.Location) %>%
+  select(email,location,Company,Department) %>%
+  filter( !is.na(email) ) %>%
+  mutate(email = tolower(email))  
+
+# Now join mailing_lists, voters, ion_contacts
+report_df <- merge(mailing_lists, voters, by="email", all.x=TRUE) %>% tbl_df()
+report_df <- merge(report_df, ion_contacts, by="email", all.x=TRUE) %>% tbl_df()
+report_df$voted = replace(report_df$voted, is.na(report_df$voted), 0)
+
+
+```
+
+```{r}
+#mailing_lists
+#voters
+#ion_contacts
+```
+
+
+# Participation By Location
+
+```{r}
+report_df_for_location <- report_df %>%
+  select(email,voted,location) %>%
+  filter( !is.na(location) ) %>%
+  unique()
+
+voting_by_location <- report_df_for_location %>%
+  group_by(location) %>%
+  summarize(count = n(), total = sum(voted), pct  = round((total/count)*100,0)) %>%
+  filter(pct > 0)
+
+voting_by_location <- voting_by_location[order(voting_by_location$pct),]
+
+voting_by_location
+
+
+```
+# Voted but not Invited
+```{r}
+# 
+voting_by_location %>% tbl_df() %>%
+  summarize(total_members = sum(count), members_voted = sum(total), pct = round(100*(members_voted/total_members),0))
+
+# anyone in voters and not in mailing_lists
+
+mailing_list_members <- select(mailing_lists,email) %>%
+  mutate(available = 1)
+
+temp_voters <- merge(voters , mailing_list_members, by="email", all.x=TRUE) 
+
+temp_voters %>% tbl_df() %>%
+    filter( is.na(available) ) %>%
+  select(email) %>%
+    print()
+
+
+```
+
+
+# Members Who Left ION
+```{r}
+people_who_left <- report_df %>%
+  filter( is.na(location) ) %>%
+  select(email,voted) %>%
+  unique()
+
+people_who_left %>% filter(voted == 0) %>% select(email)
+people_who_left %>% filter(voted == 1) %>% select(email)
+
+```
+
+

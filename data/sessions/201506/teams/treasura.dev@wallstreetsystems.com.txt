@@ -1,0 +1,7 @@
+ cecilia.shultz@wallstreetsystems.com,
+cecilia.to@wallstreetsystems.com,
+daniel.chua@wallstreetsystems.com,
+miao.yao@wallstreetsystems.com,
+paul.obrien@wallstreetsystems.com,
+peter.callaway@wallstreetsystems.com,
+viktor.sevastyanov@wallstreetsystems.com 
