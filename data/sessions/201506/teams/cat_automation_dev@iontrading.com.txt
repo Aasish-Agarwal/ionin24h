@@ -1,5 +1,0 @@
- "Abhishek Jain" <abhishek.jain@iontrading.com>,
-"Abhishek Mathur" <abhishek.mathur@iontrading.com>,
-"Ashutosh Singh" <ashutosh.singh@iontrading.com>,
-"Harish Arya" <h.arya@iontrading.com>,
-"Mayank Gupta" <mayank.gupta@iontrading.com> 

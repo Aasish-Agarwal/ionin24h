@@ -1,9 +1,0 @@
- "Andrea Boni" <a.boni@iontrading.com>,
-"Andrea Fasano" <a.fasano@iontrading.com>,
-"Andrea Taddei" <a.taddei@iontrading.com>,
-"Giambattista Bloisi" <g.bloisi@iontrading.com>,
-"Michele Bini" <m.bini@iontrading.com>,
-"Riccardo Chiaverini" <r.chiaverini@iontrading.com>,
-alessandro.zucca@iontrading.com,
-g.visco@iontrading.com,
-pavel.halas@wallstreetsystems.com 

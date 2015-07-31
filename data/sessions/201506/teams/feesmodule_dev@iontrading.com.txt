@@ -1,8 +1,0 @@
- "Andrew Sutton" <a.sutton@iontrading.com>,
-"Ian Rutherford" <i.rutherford@iontrading.com>,
-"Jitendra Chittoda" <j.chittoda@iontrading.com>,
-"Mayank Gupta (R&N)" <gupta.mayank@iontrading.com>,
-"Nalin Kuruppu" <nalin.kuruppu@patsystems.com>,
-"Richard Lewis" <r.lewis@iontrading.com>,
-"Sam Cayford" <s.cayford@iontrading.com>,
-"Shital Bhagwat" <s.bhagwat@iontrading.com> 

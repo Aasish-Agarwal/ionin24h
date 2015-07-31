@@ -1,7 +1,0 @@
- "Bhavneesh Rustagi" <b.rustagi@iontrading.com>,
-"Dave Degner" <d.degner@iontrading.com>,
-"Jagpreet Athwal" <j.athwal@iontrading.com>,
-"Manvendra Singh" <manvendra.singh@iontrading.com>,
-"Peter Heyfron" <p.heyfron@iontrading.com>,
-"Sanjesh Parmar" <s.parmar@iontrading.com>,
-"Shailendra Singh" <shailendra.singh@iontrading.com> 

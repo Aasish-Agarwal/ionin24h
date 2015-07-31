@@ -1,8 +1,0 @@
- "Anton Krutov" <anton.krutov@wallstreetsystems.com>,
-"David Mile" <david.mile@wallstreetsystems.com>,
-"Eran Gurfinkel" <eran.gurfinkel@wallstreetsystems.com>,
-"Jing Li" <jing.li@wallstreetsystems.com>,
-"Michal Lemczyk" <mlemczyk@wallstreetsystems.com>,
-"Shashikant More" <shashikant.more@wallstreetsystems.com>,
-"Yutao Wang" <yutao.wang@wallstreetsystems.com>,
-jason.shantz@wallstreetsystems.com 

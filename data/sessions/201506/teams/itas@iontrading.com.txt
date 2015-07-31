@@ -1,5 +1,0 @@
- "Abhishek Jain" <abhishek.jain@iontrading.com>,
-"Amit Garg" <amit.garg@iontrading.com>,
-"Lalit Mohan Tiwari" <l.tiwari@iontrading.com>,
-"Nitin Jalan" <n.jalan@iontrading.com>,
-"Rajiv Kanvar" <r.kanvar@iontrading.com> 

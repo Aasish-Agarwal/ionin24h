@@ -1,4 +1,0 @@
-"Alessio Del Chiaro" <a.delchiaro@iontrading.com>,
-"Carlo Bellanca" <c.bellanca@iontrading.com>,
-"Cristiano Bernini" <c.bernini@iontrading.com>,
-"Marco Bizzarri" <m.bizzarri@iontrading.com> 
