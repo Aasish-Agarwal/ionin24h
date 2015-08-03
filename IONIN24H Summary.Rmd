@@ -14,86 +14,120 @@ This script assumes that data for analysis is stored under `data\sessions` folde
 * * Example `anvil9ba,	Anvil`
 * Create `innovators.csv` in `Working Folder` listing email of all members that presented their projects. Column must have the header `email`
 
-# Preparing data set
-```{r,results='hide'}
-library(dplyr)
-session <- "201506"
+```{r,echo=FALSE,results='hide'}
+## Defining Constants and functions
 
+g_data_root <- "data/sessions"
+g_session <- "201506"
+g_miling_list_folder <- "teams"
+g_team_groups_file <- "team_groups.csv"
+g_innovators_file <- "innovators.csv"
+g_voters_file <- "voters.csv"
+g_ion_contacts_file <- "ion_contacts.csv"
 
 # Prepare Participant Structure
 ## Browse through the list of teams
 ## Create a data frame with mail id and mailing list name
-
-
-mailinglistpath = paste("data/sessions" , session , "teams", sep = "/")
-files <- list.files(path=mailinglistpath, pattern="*.txt", full.names=T, recursive=FALSE)
-
-mailing_lists <- do.call(rbind,lapply(files, function(x) {
-  listname <- sub("@.*", "", basename(x))
-  members <- read.csv(x,stringsAsFactors = F, na.strings=c("NA","NaN", "") , header = F) %>%
-    tbl_df() %>%
-    filter( !is.na(V1) ) %>%
-    mutate(email = sub(".*<", "", V1), email = sub(">.*","",email),team = listname)  %>%
-    mutate(email = tolower(email))  %>%
-    select(email,team)
-  })
-)
-
+read_mailing_lists <- function(session) 
+{
+  mailinglistpath = paste( g_data_root , session , g_miling_list_folder , sep = "/")
+  files <- list.files(path=mailinglistpath, pattern="*.txt", full.names=T, recursive=FALSE)
+  
+  mailing_lists <- do.call(rbind,lapply(files, function(x) {
+    listname <- sub("@.*", "", basename(x))
+    members <- read.csv(x,stringsAsFactors = F, na.strings=c("NA","NaN", "") , header = F) %>%
+      tbl_df() %>%
+      filter( !is.na(V1) ) %>%
+      mutate(email = sub(".*<", "", V1), email = sub(">.*","",email),team = listname)  %>%
+      mutate(email = tolower(email))  %>%
+      select(email,team)
+    })
+  )
+  return(mailing_lists)
+}
 
 # load team groups
-filename = paste("data/sessions" , session , "team_groups.csv", sep = "/")
-team_groups <- read.csv(filename,stringsAsFactors = F, na.strings=c("NA","NaN", "") ) %>%
-  tbl_df()
-
+read_team_groups <- function(session) 
+{
+  filename = paste( g_data_root , session , g_team_groups_file , sep = "/")
+  team_groups <- read.csv(filename,stringsAsFactors = F, na.strings=c("NA","NaN", "") ) %>%
+    tbl_df()
+  
+  return(team_groups)
+}
 
 # load innovators
-filename = paste("data/sessions" , session , "innovators.csv", sep = "/")
-innovators <- read.csv(filename,stringsAsFactors = F, na.strings=c("NA","NaN", "") ) %>%
-  tbl_df() %>%
-  mutate(email = tolower(email), innovated = 1)  %>%
-  unique()
-
+read_innovators <- function (session) 
+  {
+  filename = paste( g_data_root , session , g_innovators_file, sep = "/")
+  innovators <- read.csv(filename,stringsAsFactors = F, na.strings=c("NA","NaN", "") ) %>%
+    tbl_df() %>%
+    mutate(email = tolower(email), innovated = 1)  %>%
+    unique()
+  
+  return(innovators)
+}
 
 # Prepare voters list
-filename = paste("data/sessions" , session , "voters.csv", sep = "/")
-voters <- read.csv(filename,stringsAsFactors = F, na.strings=c("NA","NaN", "") ) %>%
-  tbl_df() %>%
-  rename(email = Username) %>%
-  select(email) %>%
-  filter( !is.na(email) ) %>%
-  mutate(email = tolower(email), voted = 1) 
-
+read_voters <- function (session)
+{
+    filename = paste( g_data_root , session , g_voters_file, sep = "/")
+  voters <- read.csv(filename,stringsAsFactors = F, na.strings=c("NA","NaN", "") ) %>%
+    tbl_df() %>%
+    rename(email = Username) %>%
+    select(email) %>%
+    filter( !is.na(email) ) %>%
+    mutate(email = tolower(email), voted = 1) 
+  
+  return(voters)
+}
 
 # Create the data frame with mail, Location, Team, Group
 ## Read the contacts file
-filename = paste("data/sessions" , session , "ion_contacts.csv", sep = "/")
-ion_contacts <- read.csv(filename,stringsAsFactors = F, na.strings=c("NA","NaN", "") ) %>%
-  tbl_df() %>%
-  rename(email = E.mail.Address , location = Office.Location) %>%
-  select(email,location,Company,Department) %>%
-  filter( !is.na(email) ) %>%
-  mutate(email = tolower(email))  
+read_ion_contacts <- function(session) 
+{
+  filename = paste(g_data_root , session , g_ion_contacts_file , sep = "/")
+  ion_contacts <- read.csv(filename,stringsAsFactors = F, na.strings=c("NA","NaN", "") ) %>%
+    tbl_df() %>%
+    rename(email = E.mail.Address , location = Office.Location) %>%
+    select(email,location,Company,Department) %>%
+    filter( !is.na(email) ) %>%
+    mutate(email = tolower(email))  
+  return(ion_contacts)
+}
 
-# Now join mailing_lists, voters, ion_contacts
-report_df <- merge(mailing_lists, voters, by="email", all.x=TRUE) %>% tbl_df()
-report_df <- merge(report_df, ion_contacts, by="email", all.x=TRUE) %>% tbl_df()
-report_df <- merge(report_df, team_groups, by="team", all.x=TRUE) %>% tbl_df()
-report_df <- merge(report_df, innovators, by="email", all.x=TRUE) %>% tbl_df()
 
-report_df$innovated = replace(report_df$innovated, is.na(report_df$innovated), 0)
+## Prepare Master Data Frame
+prepare_master_data_frame <- function(session, mailing_lists, team_groups, innovators, voters, ion_contacts ) 
+{
+  report_df <- merge(mailing_lists, voters, by="email", all.x=TRUE) %>% tbl_df()
+  report_df <- merge(report_df, ion_contacts, by="email", all.x=TRUE) %>% tbl_df()
+  report_df <- merge(report_df, team_groups, by="team", all.x=TRUE) %>% tbl_df()
+  report_df <- merge(report_df, innovators, by="email", all.x=TRUE) %>% tbl_df()
+  report_df$innovated = replace(report_df$innovated, is.na(report_df$innovated), 0)
+  report_df$voted = replace(report_df$voted, is.na(report_df$voted), 0)
+  
+  write.table(report_df, "report_df.csv",row.names=F,sep=",")
 
-report_df$voted = replace(report_df$voted, is.na(report_df$voted), 0)
-
-write.table(report_df, "report_df.csv",row.names=F,sep=",")
-
+  return(report_df)
+}
 ```
 
-```{r}
-#mailing_lists
-#voters
-#ion_contacts
-```
 
+```{r,echo=F}
+# Preparing data set
+
+library(dplyr)
+mailing_lists <- read_mailing_lists(g_session)
+team_groups <- read_team_groups(g_session) 
+innovators <- read_innovators(g_session) 
+voters <- read_voters(g_session)
+ion_contacts <- read_ion_contacts(g_session)
+
+report_df <- prepare_master_data_frame(g_session, mailing_lists, team_groups, innovators, voters, ion_contacts ) 
+
+
+```
 
 # Participation By Location
 
