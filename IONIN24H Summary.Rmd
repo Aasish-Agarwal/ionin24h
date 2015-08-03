@@ -83,6 +83,9 @@ report_df <- merge(report_df, innovators, by="email", all.x=TRUE) %>% tbl_df()
 report_df$innovated = replace(report_df$innovated, is.na(report_df$innovated), 0)
 
 report_df$voted = replace(report_df$voted, is.na(report_df$voted), 0)
+
+write.table(report_df, "report_df.csv",row.names=F,sep=",")
+
 ```
 
 ```{r}
@@ -108,7 +111,7 @@ voting_by_location <- report_df_for_location %>%
 voting_by_location <- voting_by_location[order(voting_by_location$pct),]
 
 voting_by_location
-
+write.table(voting_by_location, "voting_by_location.csv",row.names=F,sep=",")
 
 ```
 # Voted but not Invited
@@ -121,12 +124,14 @@ voting_by_location %>% tbl_df() %>%
 mailing_list_members <- select(mailing_lists,email) %>%
   mutate(available = 1)
 
-temp_voters <- merge(voters , mailing_list_members, by="email", all.x=TRUE) 
+voted_but_not_nvited <- merge(voters , mailing_list_members, by="email", all.x=TRUE) 
 
-temp_voters %>% tbl_df() %>%
+voted_but_not_nvited <- voted_but_not_nvited %>% tbl_df() %>%
     filter( is.na(available) ) %>%
   select(email) %>%
     print()
+
+write.table(voted_but_not_nvited, "voted_but_not_nvited.csv",row.names=F,sep=",")
 
 
 ```
@@ -136,12 +141,12 @@ temp_voters %>% tbl_df() %>%
 ```{r}
 people_who_left <- report_df %>%
   filter( is.na(location) ) %>%
-  select(email,voted) %>%
-  unique()
+  arrange(area,team)
 
-people_who_left %>% filter(voted == 0) %>% select(email)
-people_who_left %>% filter(voted == 1) %>% select(email)
+people_who_left %>% filter(voted == 0) %>% select(email) %>% unique()
+people_who_left %>% filter(voted == 1) %>% select(email) %>% unique()
 
+write.table(people_who_left, "people_who_left.csv",row.names=F,sep=",")
 ```
 
 
@@ -155,10 +160,11 @@ report_df_for_area <- report_df %>%
   summarize(count = n() , total = sum(voted), 
             pct  = round((total/count)*100,0) ) 
 
+
 voting_by_area <- report_df_for_area[order(report_df_for_area$pct),]
-  
 print(voting_by_area)
 
+write.table(voting_by_area, "voting_by_area.csv",row.names=F,sep=",")
 ```
 
 # Innovators Report
@@ -174,13 +180,16 @@ report_df_for_innovators <- report_df %>%
   arrange(area, team)
 
 print(report_df_for_innovators)
+write.table(report_df_for_innovators, "report_df_for_innovators.csv",row.names=F,sep=",")
 
-report_df %>%
+innovator_list <- report_df %>%
   select(email,area,team,innovated)  %>%
   filter ( innovated > 0) %>% 
   select (area, team, email ) %>%
   arrange(area, team, email)
 
+print(innovator_list)
+write.table(innovator_list, "innovator_list.csv",row.names=F,sep=",")
 
 ```
 
