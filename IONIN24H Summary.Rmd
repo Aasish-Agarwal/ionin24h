@@ -140,7 +140,9 @@ report_df <- prepare_master_data_frame(g_session, mailing_lists, team_groups, in
 ```
 
 # Participation By Location
-This section summarizes the members at different Geographical Locations. 
+This section summarizes the members at different Geographical Locations. Same is also exported in `voting_by_location.csv` 
+
+
 
 ```{r, echo = F}
 
@@ -161,11 +163,12 @@ summarize_voting_by_location <- function (report_df)
   return(report_df_for_location)
 }
 
-print(summarize_voting_by_location(report_df = report_df))
+summarize_voting_by_location(report_df = report_df)
 ```
 
 # Participation By Area
-This section presents the summary of people who voted from different area like CAT, XTP etc.
+This section presents the summary of people who voted from different area like CAT, XTP etc.Same is also exported in `voting_by_area.csv` 
+
 ```{r, echo=F}
 summarize_voting_by_area <- function (report_df) 
 {
@@ -184,10 +187,11 @@ summarize_voting_by_area <- function (report_df)
   return(report_df_for_area)
 }
 
-print(summarize_voting_by_area(report_df = report_df))
+summarize_voting_by_area(report_df = report_df)
 ```
 
 # Summary Of Members Who Presented Their Projects
+Same is also exported in `innovators_summary.csv` along with the full list of innovators in `innovator_list.csv`
 
 ```{r, echo=F}
 summarize_innovators <- function(report_df) 
@@ -218,12 +222,14 @@ export_innovator_list <- function(report_df)
     export_to_csv(innovator_list, "innovator_list.csv")
 }
 
-print(summarize_innovators( report_df = report_df ))
+summarize_innovators( report_df = report_df )
 export_innovator_list(report_df = report_df) 
 ```
 
 # Potential Participants
-These are the people who participated in voting, bue there names were not in one of the mailing lists that we sent the invitation to
+These are the people who participated in voting, bue there names were not in one of the mailing lists that we sent the invitation to.
+
+Same is also exported in `potential_participants.csv`
 
 ```{r, echo = F}
 get_potential_participants <- function (voters, report_df) 
@@ -243,7 +249,7 @@ get_potential_participants <- function (voters, report_df)
   return(potential_participants)
 }
 
-print(get_potential_participants (voters = voters, report_df = report_df) )
+get_potential_participants (voters = voters, report_df = report_df) 
 
 ```
 
@@ -264,7 +270,7 @@ get_list_for_correction <- function (report_df) {
   return(people_who_left)
 }
 
-print(get_list_for_correction(report_df = report_df))
+tonull <- get_list_for_correction(report_df = report_df)
 ```
 
 # Preparing This Report
@@ -277,3 +283,9 @@ This script assumes that data for analysis is stored under `data\sessions` folde
 * * Example `anvil9ba,	Anvil`
 * Create `innovators.csv` in `Working Folder` listing email of all members that presented their projects. Column must have the header `email`
 
+# Notes
+Exoported CSV files are available in:
+
+<h4>
+`r paste( getwd(),g_data_root , g_session, g_verbose_output_folder , sep = "/")`
+</h4>
