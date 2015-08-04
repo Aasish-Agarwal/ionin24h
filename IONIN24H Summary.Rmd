@@ -1,24 +1,19 @@
+```{r,echo=FALSE,results='hide',message=F, warning=F}
+  library(dplyr)
+  ### - TODO
+  ### Update varaible g_session to reflect the session being processed
+  g_session <- "201506"
+```
 ---
-title: "IONIN24H Summary"
+title: "IONIN24H - `r g_session` Session Summary" 
 author: "Aasish Agarwal"
 date: "July 31, 2015"
 ---
-# Prerequisites
-
-This script assumes that data for analysis is stored under `data\sessions` folder.
-
-* Create a folder named `<yyyymm>` under sessions folder - `Working Folder`
-* Download the contacts from `ION Tracker` and save them as `ion_contacts.csv` in `Working Folder`
-* Create `voters.csv` in `Working Folder` from the responses recieved for this session. Only include the `Username` column
-* Create `team_groups.csv` in `Working Folder` capturing the relationship of a team with area, so that we can produce area wise summary. Having columns `team	and area`. 
-* * Example `anvil9ba,	Anvil`
-* Create `innovators.csv` in `Working Folder` listing email of all members that presented their projects. Column must have the header `email`
 
 ```{r,echo=FALSE,results='hide'}
 ## Defining Constants and functions
 
 g_data_root <- "data/sessions"
-g_session <- "201506"
 g_miling_list_folder <- "teams"
 g_team_groups_file <- "team_groups.csv"
 g_innovators_file <- "innovators.csv"
@@ -117,7 +112,6 @@ prepare_master_data_frame <- function(session, mailing_lists, team_groups, innov
 ```{r,echo=F}
 # Preparing data set
 
-library(dplyr)
 mailing_lists <- read_mailing_lists(g_session)
 team_groups <- read_team_groups(g_session) 
 innovators <- read_innovators(g_session) 
@@ -131,74 +125,49 @@ report_df <- prepare_master_data_frame(g_session, mailing_lists, team_groups, in
 
 # Participation By Location
 
-```{r}
-report_df_for_location <- report_df %>%
-  select(email,voted,location) %>%
-  filter( !is.na(location) ) %>%
-  unique()
+```{r, echo = F}
 
-voting_by_location <- report_df_for_location %>%
-  group_by(location) %>%
-  summarize(count = n(), total = sum(voted), pct  = round((total/count)*100,0)) %>%
-  filter(pct > 0)
+summarize_voting_by_location <- function (report_df) 
+{
+  report_df_for_location <- report_df %>%
+    select(email,voted,location) %>%
+    filter( !is.na(location) ) %>%
+    unique() %>% 
+    group_by(location) %>%
+    summarize(count = n(), total = sum(voted), pct  = round((total/count)*100,0)) %>%
+  filter(pct > 0) %>%
+    arrange(pct)
+  
+  write.table(report_df_for_location %>% mutate(pct=pct/100),
+    "voting_by_location.csv",row.names=F,sep=",")
+  
+  return(report_df_for_location)
+}
 
-voting_by_location <- voting_by_location[order(voting_by_location$pct),]
-
-voting_by_location
-write.table(voting_by_location, "voting_by_location.csv",row.names=F,sep=",")
-
+print(summarize_voting_by_location(report_df = report_df))
 ```
-# Voted but not Invited
-```{r}
-# 
-voting_by_location %>% tbl_df() %>%
-  summarize(total_members = sum(count), members_voted = sum(total), pct = round(100*(members_voted/total_members),0))
-
-# anyone in voters and not in mailing_lists
-mailing_list_members <- select(mailing_lists,email) %>%
-  mutate(available = 1)
-
-voted_but_not_nvited <- merge(voters , mailing_list_members, by="email", all.x=TRUE) 
-
-voted_but_not_nvited <- voted_but_not_nvited %>% tbl_df() %>%
-    filter( is.na(available) ) %>%
-  select(email) %>%
-    print()
-
-write.table(voted_but_not_nvited, "voted_but_not_nvited.csv",row.names=F,sep=",")
-
-
-```
-
-
-# Members Who Left ION
-```{r}
-people_who_left <- report_df %>%
-  filter( is.na(location) ) %>%
-  arrange(area,team)
-
-people_who_left %>% filter(voted == 0) %>% select(email) %>% unique()
-people_who_left %>% filter(voted == 1) %>% select(email) %>% unique()
-
-write.table(people_who_left, "people_who_left.csv",row.names=F,sep=",")
-```
-
 
 # Participation By Area
-```{r}
-report_df_for_area <- report_df %>%
-  select(email,area,voted,location) %>%
-  filter( !is.na(location) ) %>%
-  unique() %>%
-  group_by(area) %>%
-  summarize(count = n() , total = sum(voted), 
-            pct  = round((total/count)*100,0) ) 
+This section presents the summary of people who voted from different area like CAT, XTP etc.
+```{r, echo=F}
+summarize_voting_by_area <- function (report_df) 
+{
+  report_df_for_area <- report_df %>%
+    filter( !is.na(location) ) %>%
+    select(email,area,voted) %>%
+    unique() %>%
+    group_by(area) %>%
+    summarize(count = n() , total = sum(voted), 
+              pct  = round((total/count)*100,0) ) %>%
+    arrange(pct)
+  
+  write.table(report_df_for_area %>% mutate(pct=pct/100),
+    "voting_by_area.csv",row.names=F,sep=",")
+  
+  return(report_df_for_area)
+}
 
-
-voting_by_area <- report_df_for_area[order(report_df_for_area$pct),]
-print(voting_by_area)
-
-write.table(voting_by_area, "voting_by_area.csv",row.names=F,sep=",")
+print(summarize_voting_by_area(report_df = report_df))
 ```
 
 # Innovators Report
@@ -227,4 +196,58 @@ write.table(innovator_list, "innovator_list.csv",row.names=F,sep=",")
 
 ```
 
+# Potential Participants
+These are the people who participated in voting, bue there names were not in one of the mailing lists that we sent the invitation to
+
+```{r, echo = F}
+get_potential_participants <- function (voters, report_df) 
+{
+  all_that_voted <- select(voters,email)
+  all_that_voted_from_mailing_lists <- report_df %>%
+    select(email,voted) %>% filter(voted > 0) %>% unique()
+  
+  potential_participants <- merge(x= all_that_voted ,     
+    all_that_voted_from_mailing_lists, by="email", all.x=TRUE) %>% 
+    tbl_df() %>% 
+    filter(is.na(voted)) %>% select(email)
+  
+  write.table(potential_participants,
+      "potential_participants.csv",row.names=F,sep=",")
+
+  return(potential_participants)
+}
+
+print(get_potential_participants (voters = voters, report_df = report_df) )
+
+```
+
+
+# Correction Required In Mailing Lists
+This is the list of people who are in our mailing lists but they are not in ION anymore. We can use this list to follow up correction in mailing lists. 
+
+Export for same is available in the work folder as a CSV file - `people_who_left.csv`.
+
+```{r, echo=F}
+get_list_for_correction <- function (report_df) {
+  people_who_left <- report_df %>%
+    filter( is.na(location) ) %>%
+    select(area,team,email) %>%
+    arrange(area,team)
+
+  write.table(people_who_left, "people_who_left.csv",row.names=F,sep=",")
+  return(people_who_left)
+}
+
+print(get_list_for_correction(report_df = report_df))
+```
+
+# Preparing This Report
+This script assumes that data for analysis is stored under `data\sessions` folder.
+
+* Create a folder named `<yyyymm>` under sessions folder - `Working Folder`
+* Download the contacts from `ION Tracker` and save them as `ion_contacts.csv` in `Working Folder`
+* Create `voters.csv` in `Working Folder` from the responses recieved for this session. Only include the `Username` column
+* Create `team_groups.csv` in `Working Folder` capturing the relationship of a team with area, so that we can produce area wise summary. Having columns `team	and area`. 
+* * Example `anvil9ba,	Anvil`
+* Create `innovators.csv` in `Working Folder` listing email of all members that presented their projects. Column must have the header `email`
 
