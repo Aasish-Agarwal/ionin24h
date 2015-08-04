@@ -15,6 +15,7 @@ date: "July 31, 2015"
 
 g_data_root <- "data/sessions"
 g_miling_list_folder <- "teams"
+g_verbose_output_folder <- "verbose"
 g_team_groups_file <- "team_groups.csv"
 g_innovators_file <- "innovators.csv"
 g_voters_file <- "voters.csv"
@@ -91,6 +92,19 @@ read_ion_contacts <- function(session)
   return(ion_contacts)
 }
 
+## Export to CSV
+export_to_csv <- function (data , fname) {
+  #g_data_root <- "data/sessions"
+  #g_verbose_output_folder <- "verbose"
+  
+  berbose_root <- paste( g_data_root , g_session , sep = "/")
+  dir.create(file.path(berbose_root, g_verbose_output_folder), 
+             showWarnings = FALSE)
+  fname_verbose = paste( berbose_root , g_verbose_output_folder , fname, sep = "/")
+
+  write.table(data, fname_verbose,row.names=F,sep=",")
+}
+
 
 ## Prepare Master Data Frame
 prepare_master_data_frame <- function(session, mailing_lists, team_groups, innovators, voters, ion_contacts ) 
@@ -102,10 +116,12 @@ prepare_master_data_frame <- function(session, mailing_lists, team_groups, innov
   report_df$innovated = replace(report_df$innovated, is.na(report_df$innovated), 0)
   report_df$voted = replace(report_df$voted, is.na(report_df$voted), 0)
   
-  write.table(report_df, "report_df.csv",row.names=F,sep=",")
+  export_to_csv (report_df, "report_df.csv") 
 
   return(report_df)
 }
+
+
 ```
 
 
@@ -124,6 +140,7 @@ report_df <- prepare_master_data_frame(g_session, mailing_lists, team_groups, in
 ```
 
 # Participation By Location
+This section summarizes the members at different Geographical Locations. 
 
 ```{r, echo = F}
 
@@ -138,9 +155,9 @@ summarize_voting_by_location <- function (report_df)
   filter(pct > 0) %>%
     arrange(pct)
   
-  write.table(report_df_for_location %>% mutate(pct=pct/100),
-    "voting_by_location.csv",row.names=F,sep=",")
-  
+  export_to_csv (report_df_for_location %>% mutate(pct=pct/100),
+    "voting_by_location.csv") 
+
   return(report_df_for_location)
 }
 
@@ -161,39 +178,48 @@ summarize_voting_by_area <- function (report_df)
               pct  = round((total/count)*100,0) ) %>%
     arrange(pct)
   
-  write.table(report_df_for_area %>% mutate(pct=pct/100),
-    "voting_by_area.csv",row.names=F,sep=",")
-  
+  export_to_csv(report_df_for_area %>% mutate(pct=pct/100),
+    "voting_by_area.csv")
+
   return(report_df_for_area)
 }
 
 print(summarize_voting_by_area(report_df = report_df))
 ```
 
-# Innovators Report
+# Summary Of Members Who Presented Their Projects
 
-```{r}
-report_df_for_innovators <- report_df %>%
-  select(email,area,team,innovated,location) %>%
-  filter( !is.na(location) ) %>%
-  unique() %>%
-  group_by(area,team) %>%
-  summarize(count = n() , total = sum(innovated) )  %>%
-  filter (total >0 ) %>%
-  arrange(area, team)
+```{r, echo=F}
+summarize_innovators <- function(report_df) 
+{
+  report_df_for_innovators <- report_df %>%
+    select(email,area,team,innovated,location) %>%
+    filter( !is.na(location) ) %>%
+    unique() %>%
+    group_by(area,team) %>%
+    summarize(count = n() , total = sum(innovated) )  %>%
+    filter (total >0 ) %>%
+    arrange(area, team)
+  
+  export_to_csv(report_df_for_innovators, "innovators_summary.csv")
+  return(report_df_for_innovators)
+}
 
-print(report_df_for_innovators)
-write.table(report_df_for_innovators, "report_df_for_innovators.csv",row.names=F,sep=",")
 
-innovator_list <- report_df %>%
-  select(email,area,team,innovated)  %>%
-  filter ( innovated > 0) %>% 
-  select (area, team, email ) %>%
-  arrange(area, team, email)
+export_innovator_list <- function(report_df) 
+{
+  
+  innovator_list <- report_df %>%
+    select(email,area,team,innovated)  %>%
+    filter ( innovated > 0) %>% 
+    select (area, team, email ) %>%
+    arrange(area, team, email)
 
-print(innovator_list)
-write.table(innovator_list, "innovator_list.csv",row.names=F,sep=",")
+    export_to_csv(innovator_list, "innovator_list.csv")
+}
 
+print(summarize_innovators( report_df = report_df ))
+export_innovator_list(report_df = report_df) 
 ```
 
 # Potential Participants
@@ -211,8 +237,8 @@ get_potential_participants <- function (voters, report_df)
     tbl_df() %>% 
     filter(is.na(voted)) %>% select(email)
   
-  write.table(potential_participants,
-      "potential_participants.csv",row.names=F,sep=",")
+  export_to_csv(potential_participants,
+      "potential_participants.csv")
 
   return(potential_participants)
 }
@@ -234,7 +260,7 @@ get_list_for_correction <- function (report_df) {
     select(area,team,email) %>%
     arrange(area,team)
 
-  write.table(people_who_left, "people_who_left.csv",row.names=F,sep=",")
+  export_to_csv(people_who_left, "people_who_left.csv")
   return(people_who_left)
 }
 
