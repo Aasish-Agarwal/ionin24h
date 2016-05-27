@@ -1,14 +1,16 @@
 ```{r,echo=FALSE,results='hide',message=F, warning=F}
   library(dplyr)
+library(stringr)
   ### - TODO
   ### Update varaible g_session to reflect the session being processed
-  g_session <- "201506"
+  g_session <- "201605" 
+  
 ```
 ---
 title: "IONIN24H - `r g_session` Session Summary" 
 author: "Aasish Agarwal"
-date: "July 31, 2015"
 ---
+#### `r date()`
 
 ```{r,echo=FALSE,results='hide'}
 ## Defining Constants and functions
@@ -35,6 +37,7 @@ read_mailing_lists <- function(session)
       tbl_df() %>%
       filter( !is.na(V1) ) %>%
       mutate(email = sub(".*<", "", V1), email = sub(">.*","",email),team = listname)  %>%
+      mutate(email = str_trim(email)) %>%
       mutate(email = tolower(email))  %>%
       select(email,team)
     })
@@ -59,6 +62,7 @@ read_innovators <- function (session)
   innovators <- read.csv(filename,stringsAsFactors = F, na.strings=c("NA","NaN", "") ) %>%
     tbl_df() %>%
     mutate(email = tolower(email), innovated = 1)  %>%
+    mutate(email = str_trim(email)) %>%
     unique()
   
   return(innovators)
@@ -73,6 +77,7 @@ read_voters <- function (session)
     rename(email = Username) %>%
     select(email) %>%
     filter( !is.na(email) ) %>%
+    mutate(email = str_trim(email)) %>%
     mutate(email = tolower(email), voted = 1) 
   
   return(voters)
@@ -91,6 +96,7 @@ read_ion_contacts <- function(session)
     mutate(email = tolower(email))  
   return(ion_contacts)
 }
+
 
 ## Export to CSV
 export_to_csv <- function (data , fname) {
@@ -138,11 +144,48 @@ report_df <- prepare_master_data_frame(g_session, mailing_lists, team_groups, in
 
 
 ```
+# Reconciliation
+```{r,echo=F}
+reconsile_voting <-  function (report_df , voters) {
+  # Mail sent to 
+    total_members <- nrow(report_df %>%
+    filter( !is.na(location) ) %>%
+    select(email) %>%
+    unique() )
+
+  # Total members voted
+    total_voted <- nrow(voters)
+
+  # Members who voted from the mailing list
+    invitees_voted <- nrow(report_df %>%
+    filter( !is.na(location) , voted > 0 ) %>%
+    select(email) %>%
+    unique() )
+    
+  # Members not in the mailing lists that voted
+    A <- unique(report_df$email)
+    B <- unique(voters$email)
+    noninvitees_voted <- length( B[which(!B %in% A)])
+
+  # Members who voted but are not in ION contacts
+    notincontacts_voted <- nrow(report_df %>%
+    filter( is.na(location) , voted > 0 ) %>%
+    select(email) %>%
+    unique())
+    
+    return (data.frame(Total = c(total_members), 
+                       voted = c(total_voted),
+            Invited = c(invitees_voted),
+            NotInvited = c(noninvitees_voted),
+            NotInContacts = c(notincontacts_voted)))
+}
+
+knitr::kable(reconsile_voting(report_df = report_df, voters = voters))
+```
 
 # Participation By Location
+
 This section summarizes the members at different Geographical Locations. Same is also exported in `voting_by_location.csv` 
-
-
 
 ```{r, echo = F}
 
@@ -163,7 +206,7 @@ summarize_voting_by_location <- function (report_df)
   return(report_df_for_location)
 }
 
-summarize_voting_by_location(report_df = report_df)
+knitr::kable(summarize_voting_by_location(report_df = report_df))
 ```
 
 # Participation By Area
@@ -187,8 +230,98 @@ summarize_voting_by_area <- function (report_df)
   return(report_df_for_area)
 }
 
-summarize_voting_by_area(report_df = report_df)
+
+knitr::kable(summarize_voting_by_area(report_df = report_df))
+
 ```
+
+# Participation By Area and Team
+This section presents the summary of people who voted from different area like CAT, XTP etc.Same is also exported in `voting_by_area_team.csv` 
+
+```{r, echo=F}
+summarize_voting_by_area_team <- function (report_df) 
+{
+  
+  # email	team	voted	location	Company	Department	area	innovated
+
+  report_df_for_area <- report_df %>%
+    filter( !is.na(location) ) %>%
+    select(email,area,team,voted) %>%
+    unique() %>%
+    group_by(area,team) %>%
+    summarize(count = n() , total = sum(voted), 
+              pct  = round((total/count)*100,0) ) %>%
+    arrange(pct)
+  
+  export_to_csv(report_df_for_area %>% mutate(pct=pct/100),
+    "voting_by_area_team.csv")
+
+  return(report_df_for_area)
+}
+
+
+knitr::kable(summarize_voting_by_area_team(report_df = report_df))
+
+```
+
+# Participation By Area, Location
+This section presents the summary of people who voted from different area like CAT, XTP etc.Same is also exported in `voting_by_area_location.csv` 
+
+```{r, echo=F}
+summarize_voting_by_area_location <- function (report_df) 
+{
+  
+  # email	team	voted	location	Company	Department	area	innovated
+
+  report_df_for_area <- report_df %>%
+    filter( !is.na(location) ) %>%
+    select(email,area,location,voted) %>%
+    unique() %>%
+    group_by(area,location) %>%
+    summarize(count = n() , total = sum(voted), 
+              pct  = round((total/count)*100,0) ) %>%
+    arrange(pct)
+  
+  export_to_csv(report_df_for_area %>% mutate(pct=pct/100),
+    "voting_by_area_location.csv")
+
+  return(report_df_for_area)
+}
+
+
+knitr::kable(summarize_voting_by_area_location(report_df = report_df))
+
+```
+
+# Participation By Area, Team and Location
+This section presents the summary of people who voted from different area like CAT, XTP etc.Same is also exported in `voting_by_area_team_location.csv` 
+
+```{r, echo=F}
+summarize_voting_by_area_team_location <- function (report_df) 
+{
+  
+  # email	team	voted	location	Company	Department	area	innovated
+
+  report_df_for_area <- report_df %>%
+    filter( !is.na(location) ) %>%
+    select(email,area,team,location,voted) %>%
+    unique() %>%
+    group_by(area,team,location) %>%
+    summarize(count = n() , total = sum(voted), 
+              pct  = round((total/count)*100,0) ) %>%
+    arrange(pct)
+  
+  export_to_csv(report_df_for_area %>% mutate(pct=pct/100),
+    "voting_by_area_team_location.csv")
+
+  return(report_df_for_area)
+}
+
+
+knitr::kable(summarize_voting_by_area_team_location(report_df = report_df))
+
+```
+
 
 # Summary Of Members Who Presented Their Projects
 Same is also exported in `innovators_summary.csv` along with the full list of innovators in `innovator_list.csv`
@@ -222,7 +355,9 @@ export_innovator_list <- function(report_df)
     export_to_csv(innovator_list, "innovator_list.csv")
 }
 
-summarize_innovators( report_df = report_df )
+
+knitr::kable(summarize_innovators( report_df = report_df ))
+
 export_innovator_list(report_df = report_df) 
 ```
 
@@ -249,10 +384,19 @@ get_potential_participants <- function (voters, report_df)
   return(potential_participants)
 }
 
-get_potential_participants (voters = voters, report_df = report_df) 
+
+knitr::kable(get_potential_participants (voters = voters, report_df = report_df) )
 
 ```
 
+# Members who voted but are not in ION contacts
+
+```{r, echo = F}
+    knitr::kable(report_df %>%
+    filter( is.na(location) , voted > 0 ) %>%
+    select(email) %>%
+    unique())
+```
 
 # Correction Required In Mailing Lists
 This is the list of people who are in our mailing lists but they are not in ION anymore. We can use this list to follow up correction in mailing lists. 
@@ -289,3 +433,39 @@ Exoported CSV files are available in:
 <h4>
 `r paste( getwd(),g_data_root , g_session, g_verbose_output_folder , sep = "/")`
 </h4>
+
+# Be Spoke Analysis
+
+#### Members of other cat mailing lists that are not in cat_org
+
+```{r, echo=F}
+bs_cat_member_analysis <- function (report_df) 
+{
+  
+  # email	team	voted	location	Company	Department	area	innovated
+
+  cat_org_members <- report_df %>%
+    filter( !is.na(location) ) %>%
+    filter ( team == 'cat_org') %>%
+    select(email) %>%
+    mutate (found = 1) %>%
+    unique()
+  
+  
+
+  all_cat_members <- report_df %>%
+    filter( !is.na(location) ) %>%
+    filter ( area == 'CAT' & team != 'cat_org' ) %>%
+    select(team,email) %>%
+    unique()
+
+  
+  
+  return(merge(all_cat_members , cat_org_members, all=T) %>% filter(is.na(found)) )
+}
+
+
+knitr::kable(bs_cat_member_analysis(report_df = report_df))
+
+```
+
