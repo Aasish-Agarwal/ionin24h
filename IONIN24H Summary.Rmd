@@ -3,7 +3,7 @@
 library(stringr)
   ### - TODO
   ### Update varaible g_session to reflect the session being processed
-  g_session <- "201605" 
+  g_session <- "201511" 
   
 ```
 ---
@@ -184,8 +184,9 @@ knitr::kable(reconsile_voting(report_df = report_df, voters = voters))
 ```
 
 # Participation By Location
-
 This section summarizes the members at different Geographical Locations. Same is also exported in `voting_by_location.csv` 
+
+
 
 ```{r, echo = F}
 
@@ -236,7 +237,7 @@ knitr::kable(summarize_voting_by_area(report_df = report_df))
 ```
 
 # Participation By Area and Team
-This section presents the summary of people who voted from different area like CAT, XTP etc.Same is also exported in `voting_by_area_team.csv` 
+This section presents the summary of people who voted from different area like CAT, XTP etc.Same is also exported in `voting_by_area.csv` 
 
 ```{r, echo=F}
 summarize_voting_by_area_team <- function (report_df) 
@@ -261,64 +262,6 @@ summarize_voting_by_area_team <- function (report_df)
 
 
 knitr::kable(summarize_voting_by_area_team(report_df = report_df))
-
-```
-
-# Participation By Area, Location
-This section presents the summary of people who voted from different area like CAT, XTP etc.Same is also exported in `voting_by_area_location.csv` 
-
-```{r, echo=F}
-summarize_voting_by_area_location <- function (report_df) 
-{
-  
-  # email	team	voted	location	Company	Department	area	innovated
-
-  report_df_for_area <- report_df %>%
-    filter( !is.na(location) ) %>%
-    select(email,area,location,voted) %>%
-    unique() %>%
-    group_by(area,location) %>%
-    summarize(count = n() , total = sum(voted), 
-              pct  = round((total/count)*100,0) ) %>%
-    arrange(pct)
-  
-  export_to_csv(report_df_for_area %>% mutate(pct=pct/100),
-    "voting_by_area_location.csv")
-
-  return(report_df_for_area)
-}
-
-
-knitr::kable(summarize_voting_by_area_location(report_df = report_df))
-
-```
-
-# Participation By Area, Team and Location
-This section presents the summary of people who voted from different area like CAT, XTP etc.Same is also exported in `voting_by_area_team_location.csv` 
-
-```{r, echo=F}
-summarize_voting_by_area_team_location <- function (report_df) 
-{
-  
-  # email	team	voted	location	Company	Department	area	innovated
-
-  report_df_for_area <- report_df %>%
-    filter( !is.na(location) ) %>%
-    select(email,area,team,location,voted) %>%
-    unique() %>%
-    group_by(area,team,location) %>%
-    summarize(count = n() , total = sum(voted), 
-              pct  = round((total/count)*100,0) ) %>%
-    arrange(pct)
-  
-  export_to_csv(report_df_for_area %>% mutate(pct=pct/100),
-    "voting_by_area_team_location.csv")
-
-  return(report_df_for_area)
-}
-
-
-knitr::kable(summarize_voting_by_area_team_location(report_df = report_df))
 
 ```
 
@@ -433,39 +376,3 @@ Exoported CSV files are available in:
 <h4>
 `r paste( getwd(),g_data_root , g_session, g_verbose_output_folder , sep = "/")`
 </h4>
-
-# Be Spoke Analysis
-
-#### Members of other cat mailing lists that are not in cat_org
-
-```{r, echo=F}
-bs_cat_member_analysis <- function (report_df) 
-{
-  
-  # email	team	voted	location	Company	Department	area	innovated
-
-  cat_org_members <- report_df %>%
-    filter( !is.na(location) ) %>%
-    filter ( team == 'cat_org') %>%
-    select(email) %>%
-    mutate (found = 1) %>%
-    unique()
-  
-  
-
-  all_cat_members <- report_df %>%
-    filter( !is.na(location) ) %>%
-    filter ( area == 'CAT' & team != 'cat_org' ) %>%
-    select(team,email) %>%
-    unique()
-
-  
-  
-  return(merge(all_cat_members , cat_org_members, all=T) %>% filter(is.na(found)) )
-}
-
-
-knitr::kable(bs_cat_member_analysis(report_df = report_df))
-
-```
-
