@@ -11,9 +11,9 @@ get_filtered_df_from_json <- function(jsonfile)
   rdata <- mdata$name
   
   # Create a dataframe with required data
-  ndata <- data.frame(Email = rdata$personalInfo$primaryWorkEmail$address ,
+  ndata <- data.frame(email = rdata$personalInfo$primaryWorkEmail$address ,
                       IsActive = rdata$isActive ,
-                      Office = rdata$job$primaryOffice$name ,
+                      location = rdata$job$primaryOffice$name ,
                       Countryname = rdata$job$primaryOffice$locatedAt$inCity$inCountry$name ,
                       Countrycode = rdata$job$primaryOffice$locatedAt$inCity$inCountry$isoCode ,
                       Division = rdata$job$primaryDivision$name ,
@@ -26,7 +26,7 @@ get_filtered_df_from_json <- function(jsonfile)
   ndata$Team <- sub(",", "#", ndata$Team)
   
   # Remove rows with email as <NA>
-  ndata <- ndata[!is.na(ndata$Email),]
+  ndata <- ndata[!is.na(ndata$email),]
   return(ndata)
 }
 
